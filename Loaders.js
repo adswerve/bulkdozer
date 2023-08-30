@@ -1308,7 +1308,7 @@ var PlacementGroupLoader = function(cmDAO) {
     return result;
   }
 
-  /**F
+  /**
    * @see CampaignLoader.mapFeed
    */
   this.mapFeed = function(placementGroup) {
@@ -2650,6 +2650,139 @@ var PricingScheduleLoader = function(cmDAO) {
   }
 }
 PricingScheduleLoader.prototype = Object.create(BaseLoader.prototype);
+
+//Testing Zamo
+/** 
+ * Dynamic Targeting keys Loader
+ */
+var DynamicTargetingKeysLoader = function(cmDAO) {
+  this.label = 'Dynamic Targeting Keys';
+  this.entity = 'DynamicTargetingKeys';
+  this.tabName = 'Dynamic Targeting Keys';
+  this.listField = 'dynamicTargetingKeys';
+  this.idField = fields.objectId;
+
+  BaseLoader.call(this, cmDAO);
+
+/*** Adds a reference to the entity, indicating a given field in the feed maps to another tab in the feed.**/
+  this.addReference('Placements', fields.placementId);
+  this.addReference('Advertiser', fields.advertiserId);
+  this.addReference('Campaign', fields.campaignId);;
+
+  function getCampaignIDs() {
+    var sheetName = "Campaign";
+    var range = "B2:B"; // Assuming the campaign IDs start from cell A2
+    var values = getSheetValues(sheetName, range);
+    var campaignIDs = [];
+    for(var i = 0; i < values.length; i++){
+      var campaignID = values[i][0];
+      campaignIDs.push(campaignID);
+    }
+    removeEmptyValues(campaignIDs);
+    return campaignIDs;
+  }
+
+  function getSheetValues(sheetName, range) {
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = spreadsheet.getSheetByName(sheetName);
+    var values = sheet.getRange(range).getValues();
+    return values;
+  }
+
+  function removeEmptyValues(arr) {
+    for (let i = arr.length - 1; i >= 0; i--) {
+      if (!arr[i]) {
+        arr.splice(i, 1);
+      }
+    }
+  }
+
+  this.identifyItemsToLoad = function(job) {
+    this.log(job, 'Identifying items to load: ' + this.label);
+    var feedProvider = new FeedProvider(this.tabName, this.keys).load();
+    job.campaigns = getCampaignIDs();
+
+    var idsToLoad = [];
+    var placementIds = [];
+    var creativeIds = [];
+    var advertiserIds = [];
+    var adIds = [];
+
+    var searchOptions = {'campaignIds': job.campaigns};
+    for(var s = 0; s < job.campaigns.length; s++){
+      var searchOption = {'campaignId': job.campaigns[s]};
+      var creatives = cmDAO.list('Creatives','creatives', searchOption);
+      var advertisers = cmDAO.list('Advertisers', 'advertisers', searchOption);
+    }
+    var placements = cmDAO.list('Placements', 'placements', searchOptions);
+    var ads = cmDAO.list('Ads', 'ads', searchOptions);
+    
+    for (var i = 0; i < placements.length; i++) {
+      placementIds.push(placements[i].id);
+    }
+    for (var k = 0; k < creatives.length; k++) {
+      creativeIds.push(creatives[k].id);
+    }
+    for (var l = 0; l < advertisers.length; l++) {
+      advertiserIds.push(advertisers[l].id);
+    }
+    for (var i = 0; i < ads.length; i++) {
+      adIds.push(ads[i].id);
+    }
+
+    idsToLoad = idsToLoad.concat(placementIds, creativeIds, advertiserIds, adIds);
+    job.idsToLoad = idsToLoad;
+    idsToLoad[this.entity] = idsToLoad;
+  }
+
+  this.fetchItemsToLoad = function(job) {
+    var campaigns = cmDAO.list('Campaigns','campaigns', {'ids': job.campaigns})
+    
+    for (var c = 0; c < campaigns.length; c++){
+      var campAdID = campaigns[c].advertiserId;
+    }
+    var searchOptions = {'advertiserId': campAdID};
+    
+    var itemsToLoad = [];
+    var itemsAll = [];
+    itemsAll = cmDAO.list(this.entity, this.listField, searchOptions);
+
+    if(job.idsToLoad && job.idsToLoad.length > 0) {
+      for(var i = 0; i < job.idsToLoad.length; i++){
+          var itemsToCheck = parseInt(job.idsToLoad[i]);
+          
+          var result = itemsAll.filter(function(item) {
+            return parseInt(item.objectId) === itemsToCheck;  
+          });
+        
+        if(result.length > 0){
+          itemsToLoad.push(result[0]);
+        } else {
+          Logger.log('No item found for ID ' + itemsToCheck);
+        }
+      }
+    }
+    return itemsToLoad;
+  }
+
+  this.mapFeed = function(dtk) {
+    Logger.log('logging dtk...' + dtk);
+    getCampaignIDs()
+    var campaigns = cmDAO.list('Campaigns','campaigns', {'ids': getCampaignIDs()})
+    var feedItem = {};
+
+    for (var c = 0; c < campaigns.length; c++){
+      var campAdID = campaigns[c].advertiserId;
+      feedItem[fields.advertiserId] = campAdID;
+    }
+    feedItem[fields.dynamicTargetingKeyName] = dtk.name;
+    feedItem[fields.dynamicTargetingKeyObjectType] = dtk.objectType;
+    feedItem[fields.dynamicTargetingKeyObjectID] = dtk.objectId;
+      
+    return feedItem;
+  }
+};
+DynamicTargetingKeysLoader.prototype = Object.create(BaseLoader.prototype);
 
 /**
  * Returns a loader for a specific entity
