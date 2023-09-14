@@ -2797,7 +2797,7 @@ var VideoFormatsLoader = function(cmDAO) {
   this.entity = "VideoFormats";
   this.tabName = "Video Formats";
   this.listField = "videoFormats";
-  this.idField = fields.id;
+  this.idField = fields.videoFormatId;
 
   BaseLoader.call(this, cmDAO);
 
