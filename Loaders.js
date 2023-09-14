@@ -1452,8 +1452,9 @@ var PlacementLoader = function(cmDAO) {
     feedItem[fields.placementPricingScheduleCostStructure] = placement.pricingSchedule.pricingType;
     feedItem[fields.pricingScheduleTestingStart] = placement.pricingSchedule.testingStartDate;
 
-    if (placement.videoSettings && placement.videoSettings.transcodeSettings) {
-      feedItem[fields.transcodeTesting] = "Hello, world.";
+    if (placement.videoSettings && placement.videoSettings.transcodeSettings && placement.videoSettings.transcodeSettings.enabledVideoFormats) {
+      var enabledVideoFormats = placement.videoSettings.transcodeSettings.enabledVideoFormats;
+      feedItem[fields.transcodeTesting] = enabledVideoFormats.toString();
     }
 
     if(placement.tagSetting) {
