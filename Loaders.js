@@ -1452,6 +1452,8 @@ var PlacementLoader = function(cmDAO) {
     feedItem[fields.placementPricingScheduleCostStructure] = placement.pricingSchedule.pricingType;
     feedItem[fields.pricingScheduleTestingStart] = placement.pricingSchedule.testingStartDate;
 
+    feedItem[fields.transcodeTesting] = "Hello, World.";
+
     if(placement.tagSetting) {
       feedItem[fields.placementAdditionalKeyValues] = placement.tagSetting.additionalKeyValues;
     }
