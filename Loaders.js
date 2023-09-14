@@ -1387,6 +1387,7 @@ var PlacementLoader = function(cmDAO) {
 
   this.addReference('Campaign', fields.campaignId);
   this.addReference('Placement Group', fields.placementGroupId);
+  this.addReference("Transcode Config", fields.transcodeId);
 
   /**
    * @see LandingPageLoader.processSearchOptions
