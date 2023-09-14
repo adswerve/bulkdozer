@@ -2790,25 +2790,6 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
 DynamicTargetingKeysLoader.prototype = Object.create(BaseLoader.prototype);
 
 /**
- * Video Formats Loader
- */
-var VideoFormatsLoader = function(cmDAO) {
-  this.label = "Video Formats";
-  this.entity = "VideoFormats";
-  this.tabName = "Video Formats";
-  this.listField = "videoFormats";
-  this.idField = fields.videoFormatId;
-
-  BaseLoader.call(this, cmDAO);
-
-  this.identifyItemsToLoad = function(job) {
-    this.log(job, "Identifying items to load: " + this.label);
-    return;
-  }
-}
-VideoFormatsLoader.prototype = Object.create(BaseLoader.prototype);
-
-/**
  * Returns a loader for a specific entity
  *
  * params:
