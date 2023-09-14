@@ -285,10 +285,6 @@
     if(checkEntityMode(entityConfigs, 'Dynamic Targeting Keys', 'READ')) {
       jobs.push({ 'entity': 'DynamicTargetingKeys' });
     }
-
-    if(checkEntityMode(entityConfigs, "Video Formats", "READ")) {
-      jobs.push({ "entity": "VideoFormats" });
-    }
   
     return new Runner().run('identifySpecifiedItemsToLoad', jobs);
   }
