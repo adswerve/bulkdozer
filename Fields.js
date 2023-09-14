@@ -124,4 +124,11 @@ var fields = {
   'dynamicTargetingKeyObjectType': 'Object Type',
   'dynamicTargetingKeyObjectID': 'Object ID',
 
+  // Video Formats
+  'videoFormatId': 'Format ID',
+  'videoFileType': 'File Type',
+  'videoBitRate': 'Target Bit Rate',
+  'videoResolutionWidth': 'Resolution Width',
+  'videoResolutionHeight': 'Resolution Height',
+
 };
