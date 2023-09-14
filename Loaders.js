@@ -2800,8 +2800,6 @@ var VideoFormatsLoader = function(cmDAO) {
 
   this.identifyItemsToLoad = function(job) {
     this.log(job, "Identifying items to load: " + this.label);
-    var formats = cmDAO.list("VideoFormats","videoFormats");
-    console.log("formats");
   }
 }
 VideoFormatsLoader.prototype = Object.create(BaseLoader.prototype);
