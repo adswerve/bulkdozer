@@ -1389,6 +1389,35 @@ var PlacementLoader = function(cmDAO) {
   this.addReference('Placement Group', fields.placementGroupId);
   this.addReference("Transcode Config", fields.transcodeId);
 
+  /*
+   * Setup for Transcode ID functionality.
+   * Pulling in and reformatting the data from the Transcode Config sheet
+   * in order to have each Transcode ID as one object with a list of
+   * its associated video formats.
+   */
+  var transcodeConfigs = getSheetDAO().sheetToDict("Transcode Config");
+  var transcodes = {};
+  transcodeConfigs.forEach(function(transcodeConfig) {
+    var videoFormat = {
+      "fileType": transcodeConfig["File Type"],
+      "targetBitRate": transcodeConfig["Target Bitrate"],
+      "resolutionHeight": transcodeConfig["Resolution Height"],
+      "resolutionWidth": transcodeConfig["Resolution Width"]
+    };
+    
+    var transcodeId = transcodeConfig["Transcode ID"];
+
+    if (transcodeId in transcodes) {
+      transcodes[transcodeId]["formats"].push(videoFormat);
+    } else {
+      transcodes[transcodeId] = {
+        "name": transcodeId,
+        "formats": [videoFormat]
+      };
+    }
+  });
+  var helloTest = JSON.stringify(transcodes["HULU"]);
+
   /**
    * @see LandingPageLoader.processSearchOptions
    */
@@ -1455,7 +1484,10 @@ var PlacementLoader = function(cmDAO) {
 
     if (placement.videoSettings && placement.videoSettings.transcodeSettings && placement.videoSettings.transcodeSettings.enabledVideoFormats) {
       var enabledVideoFormats = placement.videoSettings.transcodeSettings.enabledVideoFormats;
-      feedItem[fields.transcodeTesting] = enabledVideoFormats.toString();
+      var enabledFormatDetails = enabledVideoFormats.map((formatId) => {
+        return cmDAO.get("VideoFormats", formatId);
+      });
+      feedItem[fields.transcodeTesting] = helloTest; // JSON.stringify(enabledFormatDetails);
     }
 
     if(placement.tagSetting) {
