@@ -1393,9 +1393,16 @@ var PlacementLoader = function(cmDAO) {
    * Setup for Transcode ID functionality.
    * Pulling in and reformatting the data from the Transcode Config sheet
    * in order to have each Transcode ID as one object with a list of
-   * its associated video formats.
+   * its associated video formats, including the actual IDs that CM understands.
    */
+  
+  // Get all of the supported video formats from CM.
+  var allVideoFormats = cmDAO.list("VideoFormats", "videoFormats", {});
+
+  // Get contents of the Transcode Config tab as a dictionary.
   var transcodeConfigs = getSheetDAO().sheetToDict("Transcode Config");
+
+  // Build object to hold the cleaned up Transcode information.
   var transcodes = {};
   transcodeConfigs.forEach(function(transcodeConfig) {
     var videoFormat = {
@@ -1412,9 +1419,31 @@ var PlacementLoader = function(cmDAO) {
     } else {
       transcodes[transcodeId] = {
         "name": transcodeId,
-        "formats": [videoFormat]
+        "formats": [videoFormat],
+        "formatIds": [] // To be populated by comparing to allVideoFormats next.
       };
     }
+  });
+
+  // Go through each transcode and figure out the formatIds.
+  var transcodeKeys = Object.keys(transcodes);
+  transcodeKeys.forEach(function(key) {
+    var transcode = transcodes[key];
+    for (var i = 0; i < transcode["formats"].length; i++) {
+      var thisFormat = transcode["formats"][i];
+      var matchingFormat = allVideoFormats.find((format) => 
+        format["fileType"] == thisFormat["fileType"] &&
+        format["targetBitRate"] == thisFormat["targetBitRate"] &&
+        format["resolution"]["width"] == thisFormat["resolutionWidth"] &&
+        format["resolution"]["height"] == thisFormat["resolutionHeight"]
+      );
+      if (matchingFormat) {
+        transcode["formatIds"].push(matchingFormat["id"]);
+      }
+    }
+    // Sort and deduplicate the IDs for easier comparisons later.
+    var cleanIds = [...new Set(transcode["formatIds"].sort())];
+    transcode["formatIds"] = cleanIds;
   });
   var helloTest = JSON.stringify(transcodes["HULU"]);
 
@@ -1484,11 +1513,11 @@ var PlacementLoader = function(cmDAO) {
 
     if (placement.videoSettings && placement.videoSettings.transcodeSettings && placement.videoSettings.transcodeSettings.enabledVideoFormats) {
       var enabledVideoFormats = placement.videoSettings.transcodeSettings.enabledVideoFormats;
-      var allVideoFormats = cmDAO.list("VideoFormats", "videoFormats", {});
+      //var allVideoFormats = cmDAO.list("VideoFormats", "videoFormats", {});
       var enabledFormatDetails = enabledVideoFormats.map((formatId) => {
         return cmDAO.get("VideoFormats", formatId);
       });
-      feedItem[fields.transcodeTesting] = JSON.stringify(allVideoFormats[0]); //helloTest; // JSON.stringify(enabledFormatDetails);
+      feedItem[fields.transcodeTesting] = helloTest; // JSON.stringify(enabledFormatDetails);
     }
 
     if(placement.tagSetting) {
