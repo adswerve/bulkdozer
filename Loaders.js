@@ -1484,10 +1484,11 @@ var PlacementLoader = function(cmDAO) {
 
     if (placement.videoSettings && placement.videoSettings.transcodeSettings && placement.videoSettings.transcodeSettings.enabledVideoFormats) {
       var enabledVideoFormats = placement.videoSettings.transcodeSettings.enabledVideoFormats;
+      var allVideoFormats = cmDAO.list("VideoFormats", "videoFormats", {});
       var enabledFormatDetails = enabledVideoFormats.map((formatId) => {
         return cmDAO.get("VideoFormats", formatId);
       });
-      feedItem[fields.transcodeTesting] = helloTest; // JSON.stringify(enabledFormatDetails);
+      feedItem[fields.transcodeTesting] = JSON.stringify(allVideoFormats[0]); //helloTest; // JSON.stringify(enabledFormatDetails);
     }
 
     if(placement.tagSetting) {
