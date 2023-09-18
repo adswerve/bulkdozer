@@ -1526,7 +1526,7 @@ var PlacementLoader = function(cmDAO) {
           }
         }
         feedItem[fields.transcodeId] = currentTranscodeId;
-        feedItem[fields.transcodeVideoFormatIds] = cleanEnabledVideoFormats.toString(); // JSON.stringify(enabledFormatDetails);
+        feedItem[fields.transcodeVideoFormatIds] = cleanEnabledVideoFormats.toString();
       } else {
         feedItem[fields.transcodeId] = "Site Managed";
       }
@@ -1682,6 +1682,41 @@ var PlacementLoader = function(cmDAO) {
       }
     }
   }
+  /**
+   * Logic to process video transcode id to correct video formats
+   *
+   * params:
+   *  job: the current job
+   */
+  function processTranscodes(job) {
+    var feedItem = job.feedItem;
+    var placement = job.cmObject;
+    var type = feedItem[fields.placementType];
+
+    if (type == "IN_STREAM_VIDEO") {
+      if (!placement.videoSettings) {
+        placement.videoSettings = {}
+      }
+
+      var transcodeId = feedItem[fields.transcodeId];
+
+      if (transcodeId && transcodeId != "Site Managed") {
+        var formatArray = [];
+        if (transcodeId == "Custom") {
+          var customFormats = feedItem[fields.transcodeVideoFormatIds];
+          formatArray = customFormats.split(",").map((x) => parseInt(x));
+        } else {
+          formatArray = transcodes[transcodeId]["formatIds"];
+        }
+
+        var transcodeSettings = {
+          "enabledVideoFormats": formatArray
+        }
+
+        placement.videoSettings.transcodeSettings = transcodeSettings;
+      }
+    }
+  }
 
   /**
    * Logic to process skippability
@@ -1830,6 +1865,7 @@ var PlacementLoader = function(cmDAO) {
     }
 
     processCompatibility(job);
+    processTranscodes(job);
     processSkippability(job);
   }
 
