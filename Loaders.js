@@ -1511,21 +1511,25 @@ var PlacementLoader = function(cmDAO) {
     feedItem[fields.placementPricingScheduleCostStructure] = placement.pricingSchedule.pricingType;
     feedItem[fields.pricingScheduleTestingStart] = placement.pricingSchedule.testingStartDate;
 
-    if (placement.videoSettings && placement.videoSettings.transcodeSettings && placement.videoSettings.transcodeSettings.enabledVideoFormats) {
-      var enabledVideoFormats = placement.videoSettings.transcodeSettings.enabledVideoFormats;
-      var cleanEnabledVideoFormats = [...new Set(enabledVideoFormats.sort())];
-      var currentTranscodeId = "Custom"; // Fallback value if nothing in the Transcode Config matches current settings.
-      var counter = 0;
-      while (currentTranscodeId == "Custom" && counter < transcodeKeys.length) {
-        var thisKey = transcodeKeys[counter];
-        counter++;
-        var thisTranscodeFormatIds = transcodes[thisKey]["formatIds"];
-        if (cleanEnabledVideoFormats.toString() == thisTranscodeFormatIds.toString()) {
-          currentTranscodeId = thisKey;
+    if (placement.videoSettings && placement.videoSettings.transcodeSettings) {
+      if (placement.videoSettings.transcodeSettings.enabledVideoFormats) {
+        var enabledVideoFormats = placement.videoSettings.transcodeSettings.enabledVideoFormats;
+        var cleanEnabledVideoFormats = [...new Set(enabledVideoFormats.sort())];
+        var currentTranscodeId = "Custom"; // Fallback value if nothing in the Transcode Config matches current settings.
+        var counter = 0;
+        while (currentTranscodeId == "Custom" && counter < transcodeKeys.length) {
+          var thisKey = transcodeKeys[counter];
+          counter++;
+          var thisTranscodeFormatIds = transcodes[thisKey]["formatIds"];
+          if (cleanEnabledVideoFormats.toString() == thisTranscodeFormatIds.toString()) {
+            currentTranscodeId = thisKey;
+          }
         }
+        feedItem[fields.transcodeId] = currentTranscodeId;
+        feedItem[fields.transcodeVideoFormatIds] = cleanEnabledVideoFormats.toString(); // JSON.stringify(enabledFormatDetails);
+      } else {
+        feedItem[fields.transcodeId] = "Site Managed";
       }
-      feedItem[fields.transcodeId] = currentTranscodeId;
-      feedItem[fields.transcodeTesting] = cleanEnabledVideoFormats.toString(); // JSON.stringify(enabledFormatDetails);
     }
 
     if(placement.tagSetting) {

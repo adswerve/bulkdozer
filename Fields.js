@@ -71,7 +71,7 @@ var fields = {
   'placementType': 'Type',
   'placementPricingScheduleCostStructure': 'Pricing Schedule Cost Structure',
   'pricingScheduleTestingStart': 'Pricing Schedule Testing Starts',
-  'transcodeTesting': "Transcode Testing",
+  'transcodeVideoFormatIds': "Video Format IDs",
   'placementSkippable': 'Skippable',
   'placementSkipOffsetSeconds': 'Skip Offset Seconds',
   'placementSkipOffsetPercentage': 'Skip Offset Percentage',
