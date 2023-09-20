@@ -1528,7 +1528,7 @@ var PlacementLoader = function(cmDAO) {
         feedItem[fields.transcodeId] = currentTranscodeId;
         feedItem[fields.transcodeVideoFormatIds] = cleanEnabledVideoFormats.toString();
       } else {
-        feedItem[fields.transcodeId] = "Site Managed";
+        feedItem[fields.transcodeId] = "Publisher Settings";
       }
     }
 
@@ -1700,7 +1700,7 @@ var PlacementLoader = function(cmDAO) {
 
       var transcodeId = feedItem[fields.transcodeId];
 
-      if (transcodeId && transcodeId != "Site Managed") {
+      if (transcodeId && transcodeId != "Publisher Settings") {
         var formatArray = [];
         if (transcodeId == "Custom") {
           var customFormats = feedItem[fields.transcodeVideoFormatIds];
@@ -1712,8 +1712,11 @@ var PlacementLoader = function(cmDAO) {
         var transcodeSettings = {
           "enabledVideoFormats": formatArray
         }
-
+        delete placement.videoSettings.publisherSpecificationId;
         placement.videoSettings.transcodeSettings = transcodeSettings;
+      } else if (!transcodeId) {
+        delete placement.videoSettings.publisherSpecificationId;
+        delete placement.videoSettings.transcodeSettings;
       }
     }
   }
