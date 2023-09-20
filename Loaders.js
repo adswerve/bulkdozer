@@ -1510,26 +1510,33 @@ var PlacementLoader = function(cmDAO) {
     feedItem[fields.placementPricingScheduleCostStructure] = placement.pricingSchedule.pricingType;
     feedItem[fields.pricingScheduleTestingStart] = placement.pricingSchedule.testingStartDate;
 
-    if (placement.videoSettings && placement.videoSettings.transcodeSettings) {
-      if (placement.videoSettings.transcodeSettings.enabledVideoFormats) {
-        var enabledVideoFormats = placement.videoSettings.transcodeSettings.enabledVideoFormats;
-        var cleanEnabledVideoFormats = [...new Set(enabledVideoFormats.sort())];
-        var currentTranscodeId = "Custom"; // Fallback value if nothing in the Transcode Config matches current settings.
-        var counter = 0;
-        while (currentTranscodeId == "Custom" && counter < transcodeKeys.length) {
-          var thisKey = transcodeKeys[counter];
-          counter++;
-          var thisTranscodeFormatIds = transcodes[thisKey]["formatIds"];
-          if (cleanEnabledVideoFormats.toString() == thisTranscodeFormatIds.toString()) {
-            currentTranscodeId = thisKey;
-          }
-        }
-        feedItem[fields.transcodeId] = currentTranscodeId;
-        feedItem[fields.transcodeVideoFormatIds] = cleanEnabledVideoFormats.toString();
-      } else {
+    if (placement.videoSettings) {
+      if (placement.videoSettings.publisherSpecificationId && placement.videoSettings.publisherSpecificationId != "") {
         feedItem[fields.transcodeId] = "Publisher Settings";
+        feedItem[fields.transcodeVideoFormatIds] = "";
+      } else if (placement.videoSettings.transcodeSettings) {
+        if (placement.videoSettings.transcodeSettings.enabledVideoFormats) {
+          var enabledVideoFormats = placement.videoSettings.transcodeSettings.enabledVideoFormats;
+          var cleanEnabledVideoFormats = [...new Set(enabledVideoFormats.sort())];
+          var currentTranscodeId = "Custom"; // Fallback value if nothing in the Transcode Config matches current settings.
+          var counter = 0;
+          while (currentTranscodeId == "Custom" && counter < transcodeKeys.length) {
+            var thisKey = transcodeKeys[counter];
+            counter++;
+            var thisTranscodeFormatIds = transcodes[thisKey]["formatIds"];
+            if (cleanEnabledVideoFormats.toString() == thisTranscodeFormatIds.toString()) {
+              currentTranscodeId = thisKey;
+            }
+          }
+          feedItem[fields.transcodeId] = currentTranscodeId;
+          feedItem[fields.transcodeVideoFormatIds] = cleanEnabledVideoFormats.toString();
+        } else {
+          feedItem[fields.transcodeId] = "Custom";
+          feedItem[fields.transcodeVideoFormatIds] = "";
+        }
       }
     }
+    
 
     if(placement.tagSetting) {
       feedItem[fields.placementAdditionalKeyValues] = placement.tagSetting.additionalKeyValues;
