@@ -1715,7 +1715,7 @@ var PlacementLoader = function(cmDAO) {
           }
         } else {
           formatArray = transcodes[transcodeId]["formatIds"];
-          //feedItem[fields.transcodeVideoFormatIds] = formatArray.toString();
+          feedItem[fields.transcodeVideoFormatIds] = formatArray.toString();
         }
 
         var transcodeSettings = {
