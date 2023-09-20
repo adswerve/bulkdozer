@@ -1703,9 +1703,12 @@ var PlacementLoader = function(cmDAO) {
         var formatArray = [];
         if (transcodeId == "Custom") {
           var customFormats = feedItem[fields.transcodeVideoFormatIds];
-          formatArray = customFormats.split(",").map((x) => parseInt(x));
+          if (customFormats && customFormats != "") {
+            formatArray = customFormats.split(",").map((x) => parseInt(x));
+          }
         } else {
           formatArray = transcodes[transcodeId]["formatIds"];
+          //feedItem[fields.transcodeVideoFormatIds] = formatArray.toString();
         }
 
         var transcodeSettings = {
