@@ -71,6 +71,7 @@ var fields = {
   'placementType': 'Type',
   'placementPricingScheduleCostStructure': 'Pricing Schedule Cost Structure',
   'pricingScheduleTestingStart': 'Pricing Schedule Testing Starts',
+  'transcodeVideoFormatIds': 'Video Format IDs',
   'placementSkippable': 'Skippable',
   'placementSkipOffsetSeconds': 'Skip Offset Seconds',
   'placementSkipOffsetPercentage': 'Skip Offset Percentage',
@@ -122,5 +123,12 @@ var fields = {
   'dynamicTargetingKeyName': 'Key Name',
   'dynamicTargetingKeyObjectType': 'Object Type',
   'dynamicTargetingKeyObjectID': 'Object ID',
+
+  // Transcode Config
+  'transcodeId': 'Transcode ID',
+  'videoFileType': 'File Type',
+  'videoResolutionHeight': 'Resolution Height',
+  'videoResolutionWidth': 'Resolution Width',
+  'videoBitRate': 'Target Bit Rate',
 
 };
