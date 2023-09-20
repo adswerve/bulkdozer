@@ -1387,6 +1387,64 @@ var PlacementLoader = function(cmDAO) {
 
   this.addReference('Campaign', fields.campaignId);
   this.addReference('Placement Group', fields.placementGroupId);
+  this.addReference("Transcode Config", fields.transcodeId);
+
+  /*
+   * Setup for Transcode ID functionality.
+   * Pulling in and reformatting the data from the Transcode Config sheet
+   * in order to have each Transcode ID as one object with a list of
+   * its associated video formats, including the actual IDs that CM understands.
+   */
+  
+  // Get all of the supported video formats from CM.
+  var allVideoFormats = cmDAO.list("VideoFormats", "videoFormats", {});
+
+  // Get contents of the Transcode Config tab as a dictionary.
+  var transcodeConfigs = getSheetDAO().sheetToDict("Transcode Config");
+
+  // Build object to hold the cleaned up Transcode information.
+  var transcodes = {};
+  transcodeConfigs.forEach(function(transcodeConfig) {
+    var videoFormat = {
+      "fileType": transcodeConfig["File Type"],
+      "targetBitRate": transcodeConfig["Target Bitrate"],
+      "resolutionHeight": transcodeConfig["Resolution Height"],
+      "resolutionWidth": transcodeConfig["Resolution Width"]
+    };
+    
+    var transcodeId = transcodeConfig["Transcode ID"];
+
+    if (transcodeId in transcodes) {
+      transcodes[transcodeId]["formats"].push(videoFormat);
+    } else {
+      transcodes[transcodeId] = {
+        "name": transcodeId,
+        "formats": [videoFormat],
+        "formatIds": [] // To be populated by comparing to allVideoFormats next.
+      };
+    }
+  });
+
+  // Go through each transcode and figure out the formatIds.
+  var transcodeKeys = Object.keys(transcodes);
+  transcodeKeys.forEach(function(key) {
+    var transcode = transcodes[key];
+    for (var i = 0; i < transcode["formats"].length; i++) {
+      var thisFormat = transcode["formats"][i];
+      var matchingFormat = allVideoFormats.find((format) => 
+        format["fileType"] == thisFormat["fileType"] &&
+        format["targetBitRate"] == thisFormat["targetBitRate"] &&
+        format["resolution"]["width"] == thisFormat["resolutionWidth"] &&
+        format["resolution"]["height"] == thisFormat["resolutionHeight"]
+      );
+      if (matchingFormat) {
+        transcode["formatIds"].push(matchingFormat["id"]);
+      }
+    }
+    // Sort and deduplicate the IDs for easier comparisons later.
+    var cleanIds = [...new Set(transcode["formatIds"].sort())];
+    transcode["formatIds"] = cleanIds;
+  });
 
   /**
    * @see LandingPageLoader.processSearchOptions
@@ -1451,6 +1509,34 @@ var PlacementLoader = function(cmDAO) {
     feedItem[fields.placementEndDate] = placement.pricingSchedule.endDate;
     feedItem[fields.placementPricingScheduleCostStructure] = placement.pricingSchedule.pricingType;
     feedItem[fields.pricingScheduleTestingStart] = placement.pricingSchedule.testingStartDate;
+
+    if (placement.videoSettings) {
+      if (placement.videoSettings.publisherSpecificationId && placement.videoSettings.publisherSpecificationId != "") {
+        feedItem[fields.transcodeId] = "Publisher Settings";
+        feedItem[fields.transcodeVideoFormatIds] = "";
+      } else if (placement.videoSettings.transcodeSettings) {
+        if (placement.videoSettings.transcodeSettings.enabledVideoFormats) {
+          var enabledVideoFormats = placement.videoSettings.transcodeSettings.enabledVideoFormats;
+          var cleanEnabledVideoFormats = [...new Set(enabledVideoFormats.sort())];
+          var currentTranscodeId = "Custom"; // Fallback value if nothing in the Transcode Config matches current settings.
+          var counter = 0;
+          while (currentTranscodeId == "Custom" && counter < transcodeKeys.length) {
+            var thisKey = transcodeKeys[counter];
+            counter++;
+            var thisTranscodeFormatIds = transcodes[thisKey]["formatIds"];
+            if (cleanEnabledVideoFormats.toString() == thisTranscodeFormatIds.toString()) {
+              currentTranscodeId = thisKey;
+            }
+          }
+          feedItem[fields.transcodeId] = currentTranscodeId;
+          feedItem[fields.transcodeVideoFormatIds] = cleanEnabledVideoFormats.toString();
+        } else {
+          feedItem[fields.transcodeId] = "Custom";
+          feedItem[fields.transcodeVideoFormatIds] = "";
+        }
+      }
+    }
+    
 
     if(placement.tagSetting) {
       feedItem[fields.placementAdditionalKeyValues] = placement.tagSetting.additionalKeyValues;
@@ -1602,6 +1688,47 @@ var PlacementLoader = function(cmDAO) {
       }
     }
   }
+  /**
+   * Logic to process video transcode id to correct video formats
+   *
+   * params:
+   *  job: the current job
+   */
+  function processTranscodes(job) {
+    var feedItem = job.feedItem;
+    var placement = job.cmObject;
+    var type = feedItem[fields.placementType];
+
+    if (type == "IN_STREAM_VIDEO") {
+      if (!placement.videoSettings) {
+        placement.videoSettings = {}
+      }
+
+      var transcodeId = feedItem[fields.transcodeId];
+
+      if (transcodeId && transcodeId != "Publisher Settings") {
+        var formatArray = [];
+        if (transcodeId == "Custom") {
+          var customFormats = feedItem[fields.transcodeVideoFormatIds];
+          if (customFormats && customFormats != "") {
+            formatArray = customFormats.split(",").map((x) => parseInt(x));
+          }
+        } else {
+          formatArray = transcodes[transcodeId]["formatIds"];
+          feedItem[fields.transcodeVideoFormatIds] = formatArray.toString();
+        }
+
+        var transcodeSettings = {
+          "enabledVideoFormats": formatArray
+        }
+        delete placement.videoSettings.publisherSpecificationId;
+        placement.videoSettings.transcodeSettings = transcodeSettings;
+      } else if (!transcodeId) {
+        delete placement.videoSettings.publisherSpecificationId;
+        delete placement.videoSettings.transcodeSettings;
+      }
+    }
+  }
 
   /**
    * Logic to process skippability
@@ -1750,6 +1877,7 @@ var PlacementLoader = function(cmDAO) {
     }
 
     processCompatibility(job);
+    processTranscodes(job);
     processSkippability(job);
   }
 
