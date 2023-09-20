@@ -86,6 +86,11 @@ var CampaignManagerDAO = function(profileId) {
       }
     }
 
+    /* Testing Zamo */
+      Logger.log('loading fetchall...:'  + JSON.stringify(result));
+      Logger.log('which fetch all entity...: ' + JSON.stringify(entity)); 
+    /* */
+    
     return result;
   }
 
@@ -202,16 +207,35 @@ var CampaignManagerDAO = function(profileId) {
    */
   this.update = function(entity, obj) {
     console.log('Updating entity ' + entity);
-    console.log('entity id: ' + obj.id);
+    Logger.log('wtf.  ' + JSON.stringify(obj))
     if(obj.id) {
       return _retry(function() {
         return DoubleClickCampaigns[entity].update(obj, profileId);
       }, DEFAULT_RETRIES, DEFAULT_SLEEP);
     } else {
       return _retry(function() {
-        return DoubleClickCampaigns[entity].insert(obj, profileId);
+        return DoubleClickCampaigns[entity].insert(obj, profileId); 
       }, DEFAULT_RETRIES, DEFAULT_SLEEP);
     }
+  }
+
+  /**
+   * Deletes item in Campaign Manager
+   * 
+   * params:
+   *  entity:
+   *  obj: object to delete
+   */
+  this.remove = function(entity, objectId, name, objectType){
+    try {
+      if(entity) {
+        return _retry(function(){
+          return DoubleClickCampaigns.DynamicTargetingKeys.remove(profileId, objectId, name, objectType);
+        }, DEFAULT_RETRIES, DEFAULT_SLEEP);
+      }
+    } catch (error){
+       Logger.log('Error deleting entity ' + entity + ': ' + error.message);
+      }
   }
 
   /**
@@ -271,8 +295,6 @@ var CampaignManagerDAO = function(profileId) {
 
       result = result.concat(this.list(entity, listName, {'ids': chunk}));
     }
-
     return result;
   }
-
 }
