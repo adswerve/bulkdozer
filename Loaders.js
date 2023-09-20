@@ -1445,7 +1445,6 @@ var PlacementLoader = function(cmDAO) {
     var cleanIds = [...new Set(transcode["formatIds"].sort())];
     transcode["formatIds"] = cleanIds;
   });
-  var helloTest = JSON.stringify(transcodes["HULU"]);
 
   /**
    * @see LandingPageLoader.processSearchOptions
