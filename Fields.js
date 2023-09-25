@@ -123,6 +123,7 @@ var fields = {
   'dynamicTargetingKeyName': 'Key Name',
   'dynamicTargetingKeyObjectType': 'Object Type',
   'dynamicTargetingKeyObjectID': 'Object ID',
+  'dynamicTargetingKeyAction': 'DTK Action',
 
   // Transcode Config
   'transcodeId': 'Transcode ID',
