@@ -230,7 +230,7 @@ var CampaignManagerDAO = function(profileId) {
     try {
       if(entity) {
         return _retry(function(){
-          return DoubleClickCampaigns.DynamicTargetingKeys.remove(profileId, objectId, name, objectType);
+          return DoubleClickCampaigns[entity].remove(profileId, objectId, name, objectType);
         }, DEFAULT_RETRIES, DEFAULT_SLEEP);
       }
     } catch (error){
