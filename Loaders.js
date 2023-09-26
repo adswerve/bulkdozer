@@ -2906,6 +2906,7 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
     feedItem[fields.dynamicTargetingKeyName] = dtk.name;
     feedItem[fields.dynamicTargetingKeyObjectType] = dtk.objectType;
     feedItem[fields.dynamicTargetingKeyObjectID] = dtk.objectId;
+    feedItem[fields.dynamicTargetingKeyAction] = "n/a";
       
     return feedItem;
   }
@@ -2939,7 +2940,7 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
         return;
       }
 
-      var idAdvertiser = job.feedItem[this.idAdField]
+      var idAdvertiser = job.feedItem[this.idAdField];
       var feedItem = [job.feedItem["_original"]];
 
       //Testing logic
