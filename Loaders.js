@@ -2914,6 +2914,122 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
   function areArraysEqual(array1, array2) {
     return JSON.stringify(array1) === JSON.stringify(array2);
   }
+
+  /**
+   * Override this method since it needs to be able to update
+   * or remove items based on the dynamicTargetingKeyAction field.
+   * 
+   * Maps a feed to a CM object and updates CM
+   * 
+   * params:
+   *  job: the job object
+   *  job.feedItem: feed item to map and push, which is updated with
+   *  changes such as new ids
+   */
+  this.push = function(job) {
+    if (job.feedItem.unkeyed) {
+      this.log(job, this.idField + ' is empty for ' + this.label + '. Skipping');
+      return;
+    }
+    
+    var dtkAction = job.feedItem[fields.dynamicTargetingKeyAction];
+
+    if (!dtkAction || dtkAction == '' || dtkAction == 'n/a') {
+      this.log(job, this.idField + ' is not being updated. Skipping');
+      return;
+    }
+
+    cmDAO.setCache(getCache('SERVICE'));
+
+    var idValue = job.feedItem[this.idField];
+    var objectType = job.feedItem[fields.dynamicTargetingKeyObjectType];
+    var dtkName = job.feedItem[fields.dynamicTargetingKeyName];
+
+    try {
+      getIdStore().initialize(job.idMap);
+
+      var insert = true;
+
+      this.log(job, 'Processing ' + this.label + ': ' + idValue);
+
+      job.cmObject = {};
+
+      if (idValue && !String(idValue).indexOf('ext') == 0) {
+        job.cmObject = cmDAO.get(this.entity, idValue);
+        insert = false;
+      }
+
+      // TODO: make sure this works if removed
+      // mapChildRelationships(job.feedItem);
+
+      // TODO: make sure this works if removed
+      /*
+      for(var j = 0; j < references.length; j++) {
+        var reference = references[j];
+
+        job.feedItem[reference.field] = this.translateId(reference.tabName, job.feedItem, reference.field);
+      }
+      */
+
+      if(this.preProcessPush) {
+        this.preProcessPush(job);
+      }
+
+      // TODO: make sure this works if removed
+      // Map feed to object
+      // this.processPush(job);
+
+      if (dtkAction == 'Insert') {
+        var outputObj = {
+          'name': dtkName,
+          'objectType': objectType,
+          'objectId': parseInt(idValue),
+          'kind': 'dfareporting#dynamicTargetingKey'
+        }
+        job.cmObject = cmDAO.update(this.entity, outputObj);
+      } else if (dtkAction == 'Delete' && objectType != 'OBJECT_ADVERTISER') {
+        job.cmObject = cmDAO.remove(this.entity, parseInt(idValue), dtkName, objectType);
+      }
+
+      // TODO: make sure this works if removed
+      //job.cmObject = cmDAO.update(this.entity, job.cmObject);
+
+      // TODO: make sure this works if removed
+      //job.feedItem[this.idField] = job.cmObject.id;
+
+      // TODO: make sure this works if removed
+      // Store new ids
+      /*
+      if(idValue && String(idValue).indexOf('ext') == 0) {
+        getIdStore().addId(this.tabName, idValue, job.cmObject.id);
+      }
+      */
+
+      if(this.postProcessPush) {
+        this.postProcessPush(job);
+      }
+
+    } catch(error) {
+      this.log(job, 'Error processing ' + this.label + ': ' + idValue);
+      this.log(job, 'Error Message: ' + error.message);
+
+      throw error;
+    }
+  }
+
+  /**
+   * This is called after an item is processed to allow an entity specific
+   * loader to perform post processing tasks, such as updating informational
+   * fields. This method changes the job properties directly.
+   * 
+   * params:
+   *  job: The job being post processed
+   */
+  this.postProcessPush = function(job) {
+    job.feedItem[fields.dynamicTargetingKeyAction] = 'n/a';
+  }
+
+  // TODO: see if alternate push function works before removing this
   /**
    * Maps a feed to a CM object and updates CM
    *
@@ -2922,6 +3038,7 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
    *  job.feedItem: feed item to map and push, it is updated with changes such
    *  as new ids
    */
+  /*
   this.push = function(job) {
     getIdStore().initialize(job.idMap);
       var insert = true;
@@ -3011,6 +3128,7 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
       throw error;
     }
   }
+  */
 };
 DynamicTargetingKeysLoader.prototype = Object.create(BaseLoader.prototype);
 
