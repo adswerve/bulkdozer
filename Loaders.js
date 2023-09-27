@@ -2911,10 +2911,6 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
     
   }
 
-  function areArraysEqual(array1, array2) {
-    return JSON.stringify(array1) === JSON.stringify(array2);
-  }
-
   /**
    * Override this method since it needs to be able to update
    * or remove items based on the dynamicTargetingKeyAction field.
