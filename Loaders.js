@@ -2933,17 +2933,15 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
    */
   this.push = function(job) {
     getIdStore().initialize(job.idMap);
-    this.log(job, 'push function for job: ' + JSON.stringify(job));
-    this.log(job, 'who am I? ' + JSON.stringify(this));
     if (job.feedItem.unkeyed) {
-      this.log(job, this.idField + ' is empty for ' + this.label + '. Skipping');
+      // this.log(job, this.idField + ' is empty for ' + this.label + '. Skipping');
       return;
     }
     
     var dtkAction = job.feedItem[fields.dynamicTargetingKeyAction];
 
     if (!dtkAction || dtkAction == '' || dtkAction == 'n/a') {
-      this.log(job, this.idField + ' is not being updated. Skipping');
+      // this.log(job, this.label + ' ' + job.feedItem[this.idField] + ' is not being updated. Skipping');
       return;
     }
 
