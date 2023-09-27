@@ -2927,6 +2927,9 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
    *  changes such as new ids
    */
   this.push = function(job) {
+    getIdStore().initialize(job.idMap);
+    this.log(job, 'push function for job: ' + JSON.stringify(job));
+    this.log(job, 'who am I? ' + JSON.stringify(this));
     if (job.feedItem.unkeyed) {
       this.log(job, this.idField + ' is empty for ' + this.label + '. Skipping');
       return;
@@ -2946,17 +2949,14 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
     var dtkName = job.feedItem[fields.dynamicTargetingKeyName];
 
     try {
-      getIdStore().initialize(job.idMap);
-
-      var insert = true;
 
       this.log(job, 'Processing ' + this.label + ': ' + idValue);
 
       job.cmObject = {};
 
       if (idValue && !String(idValue).indexOf('ext') == 0) {
-        job.cmObject = cmDAO.get(this.entity, idValue);
-        insert = false;
+        getIdStore().addId(this.tabName, idValue, job.cmObject.id);
+        //job.cmObject = cmDAO.get(this.entity, idValue);
       }
 
       // TODO: make sure this works if removed
@@ -3026,9 +3026,19 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
    *  job: The job being post processed
    */
   this.postProcessPush = function(job) {
-    job.feedItem[fields.dynamicTargetingKeyAction] = 'n/a';
+    this.log(job, 'post process push: ' + JSON.stringify(job));
+    if (job.feedItem[fields.dynamicTargetingKeyAction] && job.feedItem[fields.dynamicTargetingKeyAction] != 'Delete') {
+      job.feedItem[fields.dynamicTargetingKeyAction] = 'n/a';
+    } else if (job.feedItem[fields.dynamicTargetingKeyAction] && job.feedItem[fields.dynamicTargetingKeyAction] == 'Delete') {
+      job.feedItem[fields.advertiserId] = '';
+      job.feedItem[fields.dynamicTargetingKeyName] = '';
+      job.feedItem[fields.dynamicTargetingKeyObjectType] = '';
+      job.feedItem[fields.dynamicTargetingKeyObjectID] = '';
+      job.feedItem[fields.dynamicTargetingKeyAction] = '';
+    }
   }
 
+  
   // TODO: see if alternate push function works before removing this
   /**
    * Maps a feed to a CM object and updates CM
