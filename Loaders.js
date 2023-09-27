@@ -2880,8 +2880,6 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
         
         if(result.length > 0){
           itemsToLoad.push(result[0]);
-        } else {
-          Logger.log('No item found for ID ' + itemsToCheck);
         }
       }
     }
