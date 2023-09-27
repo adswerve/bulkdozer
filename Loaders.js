@@ -2961,28 +2961,11 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
 
       if (idValue && !String(idValue).indexOf('ext') == 0) {
         getIdStore().addId(this.tabName, idValue, job.cmObject.id);
-        //job.cmObject = cmDAO.get(this.entity, idValue);
       }
-
-      // TODO: make sure this works if removed
-      // mapChildRelationships(job.feedItem);
-
-      // TODO: make sure this works if removed
-      /*
-      for(var j = 0; j < references.length; j++) {
-        var reference = references[j];
-
-        job.feedItem[reference.field] = this.translateId(reference.tabName, job.feedItem, reference.field);
-      }
-      */
 
       if(this.preProcessPush) {
         this.preProcessPush(job);
       }
-
-      // TODO: make sure this works if removed
-      // Map feed to object
-      // this.processPush(job);
 
       if (dtkAction == 'Insert') {
         var advertiserObj = {
@@ -3004,20 +2987,6 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
       } else if (dtkAction == 'Delete' && objectType != 'OBJECT_ADVERTISER') {
         job.cmObject = cmDAO.remove(this.entity, parseInt(idValue), dtkName, objectType);
       }
-
-      // TODO: make sure this works if removed
-      //job.cmObject = cmDAO.update(this.entity, job.cmObject);
-
-      // TODO: make sure this works if removed
-      //job.feedItem[this.idField] = job.cmObject.id;
-
-      // TODO: make sure this works if removed
-      // Store new ids
-      /*
-      if(idValue && String(idValue).indexOf('ext') == 0) {
-        getIdStore().addId(this.tabName, idValue, job.cmObject.id);
-      }
-      */
 
       if(this.postProcessPush) {
         this.postProcessPush(job);
