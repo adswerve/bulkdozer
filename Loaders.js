@@ -2889,7 +2889,6 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
   }
   
   this.mapFeed = function(dtk) {
-    Logger.log('logging dtk...' + dtk);
     if (dtk.objectType != 'OBJECT_ADVERTISER') {
       getCampaignIDs()
       var campaigns = cmDAO.list('Campaigns','campaigns', {'ids': getCampaignIDs()})
@@ -2998,7 +2997,6 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
    *  job: The job being post processed
    */
   this.postProcessPush = function(job) {
-    this.log(job, 'post process push: ' + JSON.stringify(job));
     if (job.feedItem[fields.dynamicTargetingKeyAction] && job.feedItem[fields.dynamicTargetingKeyAction] != 'Delete') {
       job.feedItem[fields.dynamicTargetingKeyAction] = 'n/a';
     } else if (job.feedItem[fields.dynamicTargetingKeyAction] && job.feedItem[fields.dynamicTargetingKeyAction] == 'Delete') {
