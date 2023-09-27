@@ -2791,11 +2791,6 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
   this.idCampaignField = fields.campaignId;
 
   BaseLoader.call(this, cmDAO);
-
-/*** Adds a reference to the entity, indicating a given field in the feed maps to another tab in the feed.**/
-  /*this.addReference('Placements', fields.placementId);
-  this.addReference('Advertiser', fields.advertiserId);
-  this.addReference('Campaign', fields.campaignId);;*/
   
   function getCampaignIDs() {
     var sheetName = "Campaign";
