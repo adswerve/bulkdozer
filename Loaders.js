@@ -2895,20 +2895,25 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
   
   this.mapFeed = function(dtk) {
     Logger.log('logging dtk...' + dtk);
-    getCampaignIDs()
-    var campaigns = cmDAO.list('Campaigns','campaigns', {'ids': getCampaignIDs()})
-    var feedItem = {};
+    if (dtk.objectType != 'OBJECT_ADVERTISER') {
+      getCampaignIDs()
+      var campaigns = cmDAO.list('Campaigns','campaigns', {'ids': getCampaignIDs()})
+      var feedItem = {};
 
-    for (var c = 0; c < campaigns.length; c++){
-      var campAdID = campaigns[c].advertiserId;
-      feedItem[fields.advertiserId] = campAdID;
+      for (var c = 0; c < campaigns.length; c++){
+        var campAdID = campaigns[c].advertiserId;
+        feedItem[fields.advertiserId] = campAdID;
+      }
+      feedItem[fields.dynamicTargetingKeyName] = dtk.name;
+      feedItem[fields.dynamicTargetingKeyObjectType] = dtk.objectType;
+      feedItem[fields.dynamicTargetingKeyObjectID] = dtk.objectId;
+      feedItem[fields.dynamicTargetingKeyAction] = "n/a";
+        
+      return feedItem;
+    } else {
+      return;
     }
-    feedItem[fields.dynamicTargetingKeyName] = dtk.name;
-    feedItem[fields.dynamicTargetingKeyObjectType] = dtk.objectType;
-    feedItem[fields.dynamicTargetingKeyObjectID] = dtk.objectId;
-    feedItem[fields.dynamicTargetingKeyAction] = "n/a";
-      
-    return feedItem;
+    
   }
 
   function areArraysEqual(array1, array2) {
