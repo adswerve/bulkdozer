@@ -2985,13 +2985,22 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
       // this.processPush(job);
 
       if (dtkAction == 'Insert') {
-        var outputObj = {
+        var advertiserObj = {
+          'name': dtkName,
+          'objectType': 'OBJECT_ADVERTISER',
+          'objectId': job.feedItem[fields.advertiserId],
+          'kind': 'dfareporting#dynamicTargetingKey'
+        }
+
+        job.cmObject = cmDAO.update(this.entity, advertiserObj);
+
+        var newDtkObj = {
           'name': dtkName,
           'objectType': objectType,
           'objectId': parseInt(idValue),
           'kind': 'dfareporting#dynamicTargetingKey'
         }
-        job.cmObject = cmDAO.update(this.entity, outputObj);
+        job.cmObject = cmDAO.update(this.entity, newDtkObj);
       } else if (dtkAction == 'Delete' && objectType != 'OBJECT_ADVERTISER') {
         job.cmObject = cmDAO.remove(this.entity, parseInt(idValue), dtkName, objectType);
       }
