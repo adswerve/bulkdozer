@@ -217,6 +217,9 @@ var CampaignManagerDAO = function(profileId) {
   /**
    * Deletes item in Campaign Manager
    * 
+   * Note: this has only been tested with the DynamicTargetingKeys entity.
+   * Proceed with caution if trying to use with other entities.
+   * 
    * params:
    *  entity:
    *  obj: object to delete
