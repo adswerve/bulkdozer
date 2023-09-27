@@ -85,11 +85,6 @@ var CampaignManagerDAO = function(profileId) {
         response = null;
       }
     }
-
-    /* Testing Zamo */
-      Logger.log('loading fetchall...:'  + JSON.stringify(result));
-      Logger.log('which fetch all entity...: ' + JSON.stringify(entity)); 
-    /* */
     
     return result;
   }
