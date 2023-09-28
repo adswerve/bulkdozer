@@ -143,8 +143,8 @@
             'range': 'A2:AZ'
           },
           {
-            'sheetName': 'Dynamic Targeting Keys', /*Testing Zamo */
-            'range': 'A2:D'
+            'sheetName': 'Dynamic Targeting Keys',
+            'range': 'A2:E'
           }
         ];
   
@@ -281,7 +281,7 @@
     if(checkEntityMode(entityConfigs, 'Advertiser Creative', 'READ')) {
       jobs.push({ 'entity': 'AdvertiserCreative' });
     }
-    /*Testing Zamo*/
+    
     if(checkEntityMode(entityConfigs, 'Dynamic Targeting Keys', 'READ')) {
       jobs.push({ 'entity': 'DynamicTargetingKeys' });
     }
@@ -412,7 +412,6 @@
       jobsMap['AdvertiserCreative'].run = true;
     }
   
-    /*testing Zamo */
     if(jobsMap['DynamicTargetingKeys']) {
       jobsMap['DynamicTargetingKeys'].run = true;
     }
@@ -536,8 +535,7 @@
             }
           ];
         }
-  
-        /*testing Zamo */
+        
         if(jobsMap['DynamicTargetingKeys']) {
           jobsMap['DynamicTargetingKeys'].run = true;
         }
@@ -684,7 +682,7 @@
           if(jobsMap['EventTags']) {
             hierarchyJob['eventTags'] = jobsMap['EventTags'].itemsToLoad;
           }
-          //Testing Zamo
+          
           if(jobsMap['DynamicTargetingKeys']) {
             hierarchyJob['dynamicTargetingKeys'] = jobsMap['DynamicTargetingKeys'].itemsToLoad;
           }
@@ -731,7 +729,7 @@
         'EventTags',
         'Creatives',
         'Ads',
-        'DynamicTargetingKeys' /*testing Zamo */
+        'DynamicTargetingKeys'
     ];
   
     for(var i = 0; i < entities.length; i++) {
@@ -1221,7 +1219,6 @@
             });
           }
           
-          /*Testing Zamo*/
           if(checkEntityMode(entityConfigs, 'Dynamic Targeting Keys', 'WRITE')) {
             jobs.push({
               'entity': 'DynamicTargetingKeys',

@@ -2791,11 +2791,6 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
   this.idCampaignField = fields.campaignId;
 
   BaseLoader.call(this, cmDAO);
-
-/*** Adds a reference to the entity, indicating a given field in the feed maps to another tab in the feed.**/
-  /*this.addReference('Placements', fields.placementId);
-  this.addReference('Advertiser', fields.advertiserId);
-  this.addReference('Campaign', fields.campaignId);;*/
   
   function getCampaignIDs() {
     var sheetName = "Campaign";
@@ -2885,8 +2880,6 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
         
         if(result.length > 0){
           itemsToLoad.push(result[0]);
-        } else {
-          Logger.log('No item found for ID ' + itemsToCheck);
         }
       }
     }
@@ -2894,109 +2887,91 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
   }
   
   this.mapFeed = function(dtk) {
-    Logger.log('logging dtk...' + dtk);
-    getCampaignIDs()
-    var campaigns = cmDAO.list('Campaigns','campaigns', {'ids': getCampaignIDs()})
-    var feedItem = {};
+    if (dtk.objectType != 'OBJECT_ADVERTISER') {
+      getCampaignIDs()
+      var campaigns = cmDAO.list('Campaigns','campaigns', {'ids': getCampaignIDs()})
+      var feedItem = {};
 
-    for (var c = 0; c < campaigns.length; c++){
-      var campAdID = campaigns[c].advertiserId;
-      feedItem[fields.advertiserId] = campAdID;
+      for (var c = 0; c < campaigns.length; c++){
+        var campAdID = campaigns[c].advertiserId;
+        feedItem[fields.advertiserId] = campAdID;
+      }
+      feedItem[fields.dynamicTargetingKeyName] = dtk.name;
+      feedItem[fields.dynamicTargetingKeyObjectType] = dtk.objectType;
+      feedItem[fields.dynamicTargetingKeyObjectID] = dtk.objectId;
+      feedItem[fields.dynamicTargetingKeyAction] = "n/a";
+        
+      return feedItem;
+    } else {
+      return;
     }
-    feedItem[fields.dynamicTargetingKeyName] = dtk.name;
-    feedItem[fields.dynamicTargetingKeyObjectType] = dtk.objectType;
-    feedItem[fields.dynamicTargetingKeyObjectID] = dtk.objectId;
-      
-    return feedItem;
+    
   }
 
-  function areArraysEqual(array1, array2) {
-    return JSON.stringify(array1) === JSON.stringify(array2);
-  }
   /**
+   * Override this method since it needs to be able to update
+   * or remove items based on the dynamicTargetingKeyAction field.
+   * 
    * Maps a feed to a CM object and updates CM
-   *
+   * 
    * params:
    *  job: the job object
-   *  job.feedItem: feed item to map and push, it is updated with changes such
-   *  as new ids
+   *  job.feedItem: feed item to map and push, which is updated with
+   *  changes such as new ids
    */
   this.push = function(job) {
     getIdStore().initialize(job.idMap);
-      var insert = true;
-      var idValue = job.feedItem[this.idField];    
-      this.log(job, 'Processing ' + this.label + ': ' + idValue);
-        
+    if (job.feedItem.unkeyed) {
+      // this.log(job, this.idField + ' is empty for ' + this.label + '. Skipping');
+      return;
+    }
+    
+    var dtkAction = job.feedItem[fields.dynamicTargetingKeyAction];
+
+    if (!dtkAction || dtkAction == '' || dtkAction == 'n/a') {
+      // this.log(job, this.label + ' ' + job.feedItem[this.idField] + ' is not being updated. Skipping');
+      return;
+    }
+
+    cmDAO.setCache(getCache('SERVICE'));
+
+    var idValue = job.feedItem[this.idField];
+    var objectType = job.feedItem[fields.dynamicTargetingKeyObjectType];
+    var dtkName = job.feedItem[fields.dynamicTargetingKeyName];
+
     try {
+
+      this.log(job, 'Processing ' + this.label + ': ' + idValue);
+
       job.cmObject = {};
-      // Store new ids
-      if(idValue && String(idValue).indexOf('ext') == 0) {
+
+      if (idValue && !String(idValue).indexOf('ext') == 0) {
         getIdStore().addId(this.tabName, idValue, job.cmObject.id);
       }
 
-      if(job.feedItem.unkeyed) {
-        this.log(job, this.idField + ' is empty for ' + this.label + '. Skipping');
-        return;
+      if(this.preProcessPush) {
+        this.preProcessPush(job);
       }
 
-      var idAdvertiser = job.feedItem[this.idAdField]
-      var feedItem = [job.feedItem["_original"]];
-
-      //Testing logic
-      var searchOptions = {'advertiserId': idAdvertiser};
-      var itemsAll = [];
-      itemsAll = cmDAO.list(this.entity, this.listField, searchOptions);
-
-      Logger.log('what job?..? ' + JSON.stringify(job));
-      Logger.log('Did I get my DTKs?..? ' + JSON.stringify(itemsAll))
-      Logger.log('what is here.  ' + feedItem)
-
-      // Filter inMySheet based on Object ID presence in inCm
-      var inMySheetOnlyWhatIsInCm = feedItem.filter((value) => { return itemsAll.some(cmItem => parseInt(cmItem.objectId) === value["Object ID"] && cmItem.objectName === value["Object Name"] && cmItem.objectType === value["Object Type"])});
-      Logger.log('Sheet/CM.  ' + JSON.stringify(inMySheetOnlyWhatIsInCm));
-
-      // Filter inMySheet to find items not in inCm
-      var inMySheetButNotInCm = feedItem.filter((value) => { return !itemsAll.some(cmItem => parseInt(cmItem.objectId) === value["Object ID"] && cmItem.objectName === value["Object Name"] && cmItem.objectType === value["Object Type"])});
-      Logger.log('Sheet.  ' + JSON.stringify(inMySheetButNotInCm));
-
-      // Filter inCm to find items not in inMySheet
-      var inCmButNotInMySheet = itemsAll.filter((cmItem) => { return !feedItem.some(sheetItem => sheetItem["Object ID"] === parseInt(cmItem.objectId) && sheetItem["Object Name"] === cmItem.objectName && sheetItem["Object Type"] === cmItem.objectType)});
-      Logger.log('CM.  ' + inCmButNotInMySheet);
-
-      cmDAO.setCache(getCache('SERVICE'));
-
-      if (inMySheetOnlyWhatIsInCm === null && inMySheetOnlyWhatIsInCm === undefined && inMySheetOnlyWhatIsInCm === ''){
-        Logger.log('hit')
-      } else if (inMySheetButNotInCm !== null && inMySheetButNotInCm !== undefined && !areArraysEqual(inMySheetButNotInCm, inMySheetOnlyWhatIsInCm)){
-        Logger.log('the arrays are different ') 
-        var inputObj = inMySheetButNotInCm[0];
-        if(inputObj !== null && inputObj !== undefined)
-        {
-          var outputObj = {
-            "name" : inputObj["Key Name"] || "",
-            "objectType" : inputObj["Object Type"] || "",
-            "objectId": parseInt(inputObj["Object ID"]) || 0,
-            "kind": "dfareporting#dynamicTargetingKey"
-          };
-            job.cmObject = cmDAO.update(this.entity, outputObj)
+      if (dtkAction == 'Insert') {
+        var advertiserObj = {
+          'name': dtkName,
+          'objectType': 'OBJECT_ADVERTISER',
+          'objectId': job.feedItem[fields.advertiserId],
+          'kind': 'dfareporting#dynamicTargetingKey'
         }
-      } else {
-        
-      }
-      if(inCmButNotInMySheet){
-        for(i = 0; i < inCmButNotInMySheet.length; i++){
-          var item = inCmButNotInMySheet[i];
-          var objectId = parseInt(item.objectId)
-          var name = item.name 
-          var objectType = item.objectType
-          if(parseInt(objectId) !== idAdvertiser)
-          {
-             job.cmObject = cmDAO.remove(this.entity, objectId, name, objectType)
-          }
-          else{
-            Logger.log('Not deleting this DTK with advertiser ID ' + idAdvertiser)
-          }
+
+        job.cmObject = cmDAO.update(this.entity, advertiserObj);
+
+        var newDtkObj = {
+          'name': dtkName,
+          'objectType': objectType,
+          'objectId': parseInt(idValue),
+          'kind': 'dfareporting#dynamicTargetingKey'
         }
+        job.cmObject = cmDAO.update(this.entity, newDtkObj);
+      } else if (dtkAction == 'Delete' && objectType != 'OBJECT_ADVERTISER') {
+        job.cmObject = cmDAO.remove(this.entity, parseInt(idValue), dtkName, objectType);
       }
 
       if(this.postProcessPush) {
@@ -3008,6 +2983,26 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
       this.log(job, 'Error Message: ' + error.message);
 
       throw error;
+    }
+  }
+
+  /**
+   * This is called after an item is processed to allow an entity specific
+   * loader to perform post processing tasks, such as updating informational
+   * fields. This method changes the job properties directly.
+   * 
+   * params:
+   *  job: The job being post processed
+   */
+  this.postProcessPush = function(job) {
+    if (job.feedItem[fields.dynamicTargetingKeyAction] && job.feedItem[fields.dynamicTargetingKeyAction] != 'Delete') {
+      job.feedItem[fields.dynamicTargetingKeyAction] = 'n/a';
+    } else if (job.feedItem[fields.dynamicTargetingKeyAction] && job.feedItem[fields.dynamicTargetingKeyAction] == 'Delete') {
+      job.feedItem[fields.advertiserId] = '';
+      job.feedItem[fields.dynamicTargetingKeyName] = '';
+      job.feedItem[fields.dynamicTargetingKeyObjectType] = '';
+      job.feedItem[fields.dynamicTargetingKeyObjectID] = '';
+      job.feedItem[fields.dynamicTargetingKeyAction] = '';
     }
   }
 };

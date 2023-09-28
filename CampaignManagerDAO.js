@@ -85,11 +85,6 @@ var CampaignManagerDAO = function(profileId) {
         response = null;
       }
     }
-
-    /* Testing Zamo */
-      Logger.log('loading fetchall...:'  + JSON.stringify(result));
-      Logger.log('which fetch all entity...: ' + JSON.stringify(entity)); 
-    /* */
     
     return result;
   }
@@ -222,6 +217,9 @@ var CampaignManagerDAO = function(profileId) {
   /**
    * Deletes item in Campaign Manager
    * 
+   * Note: this has only been tested with the DynamicTargetingKeys entity.
+   * Proceed with caution if trying to use with other entities.
+   * 
    * params:
    *  entity:
    *  obj: object to delete
@@ -230,7 +228,7 @@ var CampaignManagerDAO = function(profileId) {
     try {
       if(entity) {
         return _retry(function(){
-          return DoubleClickCampaigns.DynamicTargetingKeys.remove(profileId, objectId, name, objectType);
+          return DoubleClickCampaigns[entity].remove(profileId, objectId, name, objectType);
         }, DEFAULT_RETRIES, DEFAULT_SLEEP);
       }
     } catch (error){
