@@ -2791,7 +2791,7 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
   this.idCampaignField = fields.campaignId;
 
   BaseLoader.call(this, cmDAO);
-  
+
   function getCampaignIDs() {
     var sheetName = "Campaign";
     var range = "B2:B"; // Assuming the campaign IDs start from cell A2
@@ -2803,6 +2803,19 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
     }
     removeEmptyValues(campaignIDs);
     return campaignIDs;
+  }
+
+  function getPlacementIDs(){
+    var sheetName = "Placement"
+    var range = "A2:A";
+    var values = getSheetValues(sheetName, range);
+    var placementIDs = [];
+    for(var i = 0; i < values.length; i++){
+      var placementID = values[i][0];
+      placementIDs.push(placementID);
+    }
+    removeEmptyValues(placementIDs);
+    return placementIDs;
   }
 
   function getSheetValues(sheetName, range) {
@@ -2822,8 +2835,10 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
 
   this.identifyItemsToLoad = function(job) {
     this.log(job, 'Identifying items to load: ' + this.label);
+   
     var feedProvider = new FeedProvider(this.tabName, this.keys).load();
     job.campaigns = getCampaignIDs();
+    job.placements = getPlacementIDs();
 
     var idsToLoad = [];
     var placementIds = [];
@@ -2831,41 +2846,67 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
     var advertiserIds = [];
     var adIds = [];
 
-    var searchOptions = {'campaignIds': job.campaigns};
-    for(var s = 0; s < job.campaigns.length; s++){
-      var searchOption = {'campaignId': job.campaigns[s]};
-      var creatives = cmDAO.list('Creatives','creatives', searchOption);
-      var advertisers = cmDAO.list('Advertisers', 'advertisers', searchOption);
-    }
-    var placements = cmDAO.list('Placements', 'placements', searchOptions);
-    var ads = cmDAO.list('Ads', 'ads', searchOptions);
+    if (job.campaigns !== null && job.campaigns !== "" && job.campaigns !== undefined && job.campaigns.length > 0) {
+      var searchOptions = {'campaignIds': job.campaigns};
+      for(var s = 0; s < job.campaigns.length; s++){
+        var searchOption = {'campaignId': job.campaigns[s]};
+        var creatives = cmDAO.list('Creatives','creatives', searchOption);
+        var advertisers = cmDAO.list('Advertisers', 'advertisers', searchOption);
+      }
+      var placements = cmDAO.list('Placements', 'placements', searchOptions);
+      var ads = cmDAO.list('Ads', 'ads', searchOptions);
     
-    for (var i = 0; i < placements.length; i++) {
-      placementIds.push(placements[i].id);
-    }
-    for (var k = 0; k < creatives.length; k++) {
-      creativeIds.push(creatives[k].id);
-    }
-    for (var l = 0; l < advertisers.length; l++) {
-      advertiserIds.push(advertisers[l].id);
-    }
-    for (var i = 0; i < ads.length; i++) {
-      adIds.push(ads[i].id);
+      for (var i = 0; i < placements.length; i++) {
+        placementIds.push(placements[i].id);
+      }
+      for (var k = 0; k < creatives.length; k++) {
+        creativeIds.push(creatives[k].id);
+      }
+      for (var l = 0; l < advertisers.length; l++) {
+        advertiserIds.push(advertisers[l].id);
+      }
+      for (var i = 0; i < ads.length; i++) {
+        adIds.push(ads[i].id);
+      }
+
+      idsToLoad = idsToLoad.concat(placementIds, creativeIds, advertiserIds, adIds);
+      job.idsToLoad = idsToLoad;
+      idsToLoad[this.entity] = idsToLoad;
     }
 
-    idsToLoad = idsToLoad.concat(placementIds, creativeIds, advertiserIds, adIds);
-    job.idsToLoad = idsToLoad;
-    idsToLoad[this.entity] = idsToLoad;
+    else if(job.placements !== null){
+      var searchOption = {'ids' : job.placements}
+      var placements = cmDAO.list('Placements', 'placements', searchOption);
+      
+      for (var i = 0; i < placements.length; i++) {
+        placementIds.push(placements[i].id);
+      }
+      
+      idsToLoad = idsToLoad.concat(placementIds);
+      job.idsToLoad = idsToLoad;
+      idsToLoad[this.entity] = idsToLoad;
+    }
   }
 
   this.fetchItemsToLoad = function(job) {
     var campaigns = cmDAO.list('Campaigns','campaigns', {'ids': job.campaigns})
+
+    var placements = cmDAO.list('Placements', 'placements', {'ids': job.placements});
     
-    for (var c = 0; c < campaigns.length; c++){
-      var campAdID = campaigns[c].advertiserId;
+    
+    if(campaigns !== '' && campaigns.length > 0 ){
+      for (var c = 0; c < campaigns.length; c++){
+        var campAdID = campaigns[c].advertiserId;
+      }
+      var searchOptions = {'advertiserId': parseInt(campAdID)};
     }
-    var searchOptions = {'advertiserId': parseInt(campAdID)};
-    
+    else if(placements !== '' && placements.length > 0){
+      for (var p = 0; p < placements.length; p++){
+        var placeID = placements[p].advertiserId;
+      }
+      var searchOptions = {'advertiserId': parseInt(placeID)};
+    }
+
     var itemsToLoad = [];
     var itemsAll = [];
     itemsAll = cmDAO.list(this.entity, this.listField, searchOptions);
@@ -2888,20 +2929,44 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
   
   this.mapFeed = function(dtk) {
     if (dtk.objectType != 'OBJECT_ADVERTISER') {
-      getCampaignIDs()
-      var campaigns = cmDAO.list('Campaigns','campaigns', {'ids': getCampaignIDs()})
       var feedItem = {};
+      var campaignIDs = getCampaignIDs()
+      var placementIDs = getPlacementIDs();
 
-      for (var c = 0; c < campaigns.length; c++){
-        var campAdID = campaigns[c].advertiserId;
-        feedItem[fields.advertiserId] = campAdID;
+      if(campaignIDs !== null && campaignIDs.length > 0){
+        var campaigns = cmDAO.list('Campaigns','campaigns', {'ids': campaignIDs})
+        for (var c = 0; c < campaigns.length; c++){
+          var campAdID = campaigns[c].advertiserId;
+          feedItem[fields.advertiserId] = campAdID;
+        }
+        feedItem[fields.dynamicTargetingKeyName] = dtk.name;
+        feedItem[fields.dynamicTargetingKeyObjectType] = dtk.objectType;
+        feedItem[fields.dynamicTargetingKeyObjectID] = dtk.objectId;
+        feedItem[fields.dynamicTargetingKeyAction] = "n/a";
+        
+        return feedItem;
       }
-      feedItem[fields.dynamicTargetingKeyName] = dtk.name;
+      else if(placementIDs !== null && placementIDs.length > 0){
+        var placements = cmDAO.list('Placements', 'placements', {'ids': placementIDs});
+        for (var p = 0; p < placements.length; p++){
+          var placeID = placements[p].advertiserId;
+          feedItem[fields.advertiserId] = placeID;
+        }
+        feedItem[fields.dynamicTargetingKeyName] = dtk.name;
+        feedItem[fields.dynamicTargetingKeyObjectType] = dtk.objectType;
+        feedItem[fields.dynamicTargetingKeyObjectID] = dtk.objectId;
+        feedItem[fields.dynamicTargetingKeyAction] = "n/a";
+        
+        return feedItem;
+      }
+      
+
+      /*feedItem[fields.dynamicTargetingKeyName] = dtk.name;
       feedItem[fields.dynamicTargetingKeyObjectType] = dtk.objectType;
       feedItem[fields.dynamicTargetingKeyObjectID] = dtk.objectId;
       feedItem[fields.dynamicTargetingKeyAction] = "n/a";
         
-      return feedItem;
+      return feedItem;*/
     } else {
       return;
     }
