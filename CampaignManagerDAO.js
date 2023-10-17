@@ -202,7 +202,7 @@ var CampaignManagerDAO = function(profileId) {
    */
   this.update = function(entity, obj) {
     console.log('Updating entity ' + entity);
-    Logger.log('wtf.  ' + JSON.stringify(obj))
+    console.log('entity id: ' + obj.id);
     if(obj.id) {
       return _retry(function() {
         return DoubleClickCampaigns[entity].update(obj, profileId);
