@@ -2959,14 +2959,6 @@ var DynamicTargetingKeysLoader = function(cmDAO) {
         
         return feedItem;
       }
-      
-
-      /*feedItem[fields.dynamicTargetingKeyName] = dtk.name;
-      feedItem[fields.dynamicTargetingKeyObjectType] = dtk.objectType;
-      feedItem[fields.dynamicTargetingKeyObjectID] = dtk.objectId;
-      feedItem[fields.dynamicTargetingKeyAction] = "n/a";
-        
-      return feedItem;*/
     } else {
       return;
     }
